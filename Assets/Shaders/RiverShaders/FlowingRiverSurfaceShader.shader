@@ -15,6 +15,12 @@ Shader "Custom/FlowingRiverSurfaceShader"
         _Specs2("Specs", 2D) = "white" {}
         _SpecColor2("Spec Color", Color) = (1,1,1,1)
         _SpecDirection2("Spec Direction", Vector) = (0, 1, 0, 0)
+
+        [Header(Foam)]
+        _FoamNoise("Foam Noise", 2D) = "white" {}
+        _FoamDirection("Foam Direction", Vector) = (0, 1, 0, 0)
+        _FoamColor("Foam Color", Color) = (1,1,1,1)
+        _FoamAmount("Foam Amount", Range(0, 2)) = 1
     }
     SubShader
     {
@@ -22,11 +28,10 @@ Shader "Custom/FlowingRiverSurfaceShader"
         LOD 200
 
         CGPROGRAM
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows
 
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
+        #pragma surface surf Standard vertex:vert fullforwardshadows alpha
+
+        #pragma target 4.0
 
         sampler2D _MainTex;
 
@@ -34,6 +39,9 @@ Shader "Custom/FlowingRiverSurfaceShader"
         {
             float2 uv_Specs1;
             float2 uv_Specs2;
+            float2 uv_FoamNoise;
+            float eyeDepth;
+            float4 screenPos;
         };
 
         fixed4 _Color;
@@ -48,6 +56,18 @@ Shader "Custom/FlowingRiverSurfaceShader"
         fixed4 _SpecColor2;
         float2 _SpecDirection2;
 
+        //foam
+        sampler2D _FoamNoise;
+        fixed4 _FoamColor;
+        float _FoamAmount;
+        float2 _FoamDirection;
+        sampler2D_float _CameraDepthTexture;
+
+        void vert(inout appdata_full v, out Input o)
+        {
+            UNITY_INITIALIZE_OUTPUT(Input, o);
+            COMPUTE_EYEDEPTH(o.eyeDepth);
+        }
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {
@@ -63,10 +83,25 @@ Shader "Custom/FlowingRiverSurfaceShader"
             colour.rgb = lerp(colour.rgb, specLayer2.rgb, specLayer2.a);
             colour.a = lerp(colour.a, 1, specLayer2.a);
 
+            float4 projCoords = UNITY_PROJ_COORD(IN.screenPos);
+            float rawZ = SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, projCoords);
+            float sceneZ = LinearEyeDepth(rawZ);
+            float surfaceZ = IN.eyeDepth;
+
+            //add foam
+            float2 foamCoords = IN.uv_FoamNoise + _FoamDirection * _Time.y;
+            float foamNoise = tex2D(_FoamNoise, foamCoords).r;
+            float foam = 1 - ((sceneZ - surfaceZ) / _FoamAmount);
+            foam = saturate(foam - foamNoise);
+            colour.rgb = lerp(colour.rgb, _FoamColor.rgb, foam);
+            colour.a = lerp(colour.a, 1, foam * _FoamColor.a);
+
             o.Albedo = colour.rgb;
             o.Alpha = colour.a;
         }
+
         ENDCG
     }
+
     FallBack "Diffuse"
 }
