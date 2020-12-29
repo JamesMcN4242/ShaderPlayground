@@ -20,6 +20,6 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Floats:
-    - _BlurRadius: 1
-    - _Intensity: 0.01
+    - _BlurRadius: 3.17
+    - _Intensity: 1
     m_Colors: []
