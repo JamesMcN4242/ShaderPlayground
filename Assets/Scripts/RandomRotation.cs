@@ -2,7 +2,7 @@
 
 public class RandomRotation : MonoBehaviour
 {
-    void Update()
+    void RandomlyRotate()
     {
         float dt = Time.deltaTime;
         transform.Rotate
