@@ -2,6 +2,11 @@
 
 public class RandomRotation : MonoBehaviour
 {
+    private void Update()
+    {
+        RandomlyRotate();
+    }
+
     void RandomlyRotate()
     {
         float dt = Time.deltaTime;

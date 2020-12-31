@@ -1,0 +1,1 @@
+Wolf model was obtained from the website [free3d.com](https://free3d.com/3d-model/low-poly-wolf-432873.html) from a user named [procrafter](https://free3d.com/user/procrafter).
